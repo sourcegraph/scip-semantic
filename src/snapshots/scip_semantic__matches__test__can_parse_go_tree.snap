@@ -1,0 +1,27 @@
+---
+source: src/matches.rs
+assertion_line: 338
+expression: dumped
+---
+  package example
+//        ^^^^^^^ definition  scip-ctags example/
+  
+  import "fmt"
+  
+  func Something() {
+//     ^^^^^^^^^ definition  scip-ctags example/Something().
+   x := true
+   fmt.Println(x)
+  }
+  
+  func Another() float64 { return 5 / 3 }
+//     ^^^^^^^ definition  scip-ctags example/Another().
+  
+  type MyThing struct{}
+//     ^^^^^^^ definition  scip-ctags example/MyThing#
+  
+  func (m *MyThing) DoSomething()    {}
+//                  ^^^^^^^^^^^ definition  scip-ctags example/MyThing#DoSomething().
+  func (m MyThing) DoSomethingElse() {}
+//                 ^^^^^^^^^^^^^^^ definition  scip-ctags example/MyThing#DoSomethingElse().
+

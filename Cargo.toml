@@ -6,3 +6,33 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+scip.workspace = true
+protobuf.workspace = true
+
+tree-sitter.workspace = true
+tree-sitter-c.workspace = true
+tree-sitter-go = "0.19.1"
+tree-sitter-rust = "0.20.3"
+
+ctags = { path = "crates/ctags" }
+anyhow.workspace = true
+pretty_assertions = "1.3.0"
+
+# TODO: I forget how to move this to only test haha
+insta = "1.28.0"
+
+[workspace]
+members = [
+    "crates/ctags/"
+]
+
+[workspace.dependencies]
+
+# Note, scip and protobuf must be kept in sync
+scip = { git = "https://github.com/sourcegraph/scip" }
+protobuf = "*"
+
+anyhow = "1.0.69"
+
+tree-sitter = "0.20.9"
+tree-sitter-c = "0.20.2"
