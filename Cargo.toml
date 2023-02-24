@@ -10,20 +10,20 @@ scip.workspace = true
 protobuf.workspace = true
 
 tree-sitter.workspace = true
-tree-sitter-c.workspace = true
-tree-sitter-go = "0.19.1"
-tree-sitter-rust = "0.20.3"
 
-ctags = { path = "crates/ctags" }
 anyhow.workspace = true
 pretty_assertions = "1.3.0"
+
+ctags = { path = "crates/ctags" }
+scip-treesitter = { path = "crates/scip-treesitter" }
+scip-treesitter-languages = { path = "crates/scip-treesitter-languages" }
 
 # TODO: I forget how to move this to only test haha
 insta = "1.28.0"
 
 [workspace]
 members = [
-    "crates/ctags/"
+    "crates/*"
 ]
 
 [workspace.dependencies]
@@ -35,4 +35,3 @@ protobuf = "*"
 anyhow = "1.0.69"
 
 tree-sitter = "0.20.9"
-tree-sitter-c = "0.20.2"

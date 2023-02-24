@@ -7,7 +7,7 @@ pub struct TagConfiguration {
 }
 
 pub fn rust() -> TagConfiguration {
-    let language = tree_sitter_rust::language();
+    let language = scip_treesitter_languages::rust();
     let query = "
         ;; TODO: Could do @scope.ignore to ignore this as a definition
 
@@ -44,7 +44,7 @@ pub fn rust() -> TagConfiguration {
 }
 
 pub fn go() -> TagConfiguration {
-    let language = tree_sitter_go::language();
+    let language = scip_treesitter_languages::go();
     let query = "
         (source_file (package_clause (package_identifier) @descriptor.namespace)) @scope
 

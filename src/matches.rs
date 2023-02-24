@@ -1,9 +1,11 @@
+use scip_treesitter::prelude::*;
+
 use anyhow::Result;
 use protobuf::Enum;
 use scip::types::Descriptor;
 use tree_sitter::Node;
 
-use crate::{languages::TagConfiguration, ts_node};
+use crate::languages::TagConfiguration;
 
 #[derive(Debug)]
 pub struct Root<'a> {
@@ -72,6 +74,12 @@ pub enum Matched<'a> {
     Global(Global<'a>),
 }
 
+impl<'a> ContainsNode for Matched<'a> {
+    fn contains_node(&self, node: &Node) -> bool {
+        self.node().contains_node(node)
+    }
+}
+
 impl<'a> Matched<'a> {
     pub fn node(&self) -> &Node<'a> {
         match self {
@@ -89,17 +97,13 @@ impl<'a> Matched<'a> {
     //     }
     // }
 
-    pub fn contains(&self, node: &Node<'a>) -> bool {
-        ts_node::contains(self.node(), node)
-    }
-
     pub fn insert(&mut self, m: Matched<'a>) {
         match self {
             Matched::Root(root) => {
                 if let Some(child) = root
                     .children
                     .iter_mut()
-                    .find(|child| child.contains(m.node()))
+                    .find(|child| child.contains_node(m.node()))
                 {
                     child.insert(m);
                 } else {
@@ -110,7 +114,7 @@ impl<'a> Matched<'a> {
                 if let Some(child) = scope
                     .children
                     .iter_mut()
-                    .find(|child| child.contains(m.node()))
+                    .find(|child| child.contains_node(m.node()))
                 {
                     child.insert(m);
                 } else {
