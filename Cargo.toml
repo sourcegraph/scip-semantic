@@ -17,6 +17,7 @@ pretty_assertions = "1.3.0"
 ctags = { path = "crates/ctags" }
 scip-treesitter = { path = "crates/scip-treesitter" }
 scip-treesitter-languages = { path = "crates/scip-treesitter-languages" }
+scip-macros = { path = "crates/scip-macros" }
 
 # TODO: I forget how to move this to only test haha
 insta = "1.28.0"
@@ -27,11 +28,10 @@ members = [
 ]
 
 [workspace.dependencies]
+anyhow = "1.0.69"
+tree-sitter = "0.20.9"
 
 # Note, scip and protobuf must be kept in sync
 scip = { git = "https://github.com/sourcegraph/scip" }
 protobuf = "*"
 
-anyhow = "1.0.69"
-
-tree-sitter = "0.20.9"

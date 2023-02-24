@@ -2,6 +2,7 @@ use tree_sitter::Node;
 
 pub mod prelude {
     pub use super::ContainsNode;
+    pub use super::NodeToScipRange;
 }
 
 pub trait ContainsNode {
@@ -11,6 +12,32 @@ pub trait ContainsNode {
 impl<'a> ContainsNode for Node<'a> {
     fn contains_node(&self, node: &Node) -> bool {
         self.start_byte() <= node.start_byte() && self.end_byte() >= node.end_byte()
+    }
+}
+
+pub trait NodeToScipRange {
+    fn to_scip_range(&self) -> Vec<i32>;
+}
+
+impl<'a> NodeToScipRange for Node<'a> {
+    fn to_scip_range(&self) -> Vec<i32> {
+        let start_position = self.start_position();
+        let end_position = self.end_position();
+
+        if start_position.row == end_position.row {
+            vec![
+                start_position.row as i32,
+                start_position.column as i32,
+                end_position.column as i32,
+            ]
+        } else {
+            vec![
+                start_position.row as i32,
+                start_position.column as i32,
+                end_position.row as i32,
+                end_position.column as i32,
+            ]
+        }
     }
 }
 
