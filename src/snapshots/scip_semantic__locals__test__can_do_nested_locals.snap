@@ -1,40 +1,42 @@
 ---
 source: src/locals.rs
-assertion_line: 344
+assertion_line: 372
 expression: dumped
 ---
   package main
+//        ^^^^ definition  local 2
   
   func main() {
+//     ^^^^ definition  local 1
    local := 5
-// ^^^^^ definition  local 1
+// ^^^^^ definition  local 3
    something := func(unrelated int) int {
-// ^^^^^^^^^ definition  local 2
-//                   ^^^^^^^^^ definition  local 3
+// ^^^^^^^^^ definition  local 4
+//                   ^^^^^^^^^ definition  local 5
     superNested := func(deeplyNested int) int {
-//  ^^^^^^^^^^^ definition  local 4
-//                      ^^^^^^^^^^^^ definition  local 6
+//  ^^^^^^^^^^^ definition  local 6
+//                      ^^^^^^^^^^^^ definition  local 8
      return local + unrelated + deeplyNested
-//          ^^^^^ reference  local 1
-//                  ^^^^^^^^^ reference  local 3
-//                              ^^^^^^^^^^^^ reference  local 6
+//          ^^^^^ reference  local 3
+//                  ^^^^^^^^^ reference  local 5
+//                              ^^^^^^^^^^^^ reference  local 8
     }
   
     overwriteName := func(local int) int {
-//  ^^^^^^^^^^^^^ definition  local 5
-//                        ^^^^^ definition  local 7
+//  ^^^^^^^^^^^^^ definition  local 7
+//                        ^^^^^ definition  local 9
      return local + unrelated
-//          ^^^^^ reference  local 7
-//                  ^^^^^^^^^ reference  local 3
+//          ^^^^^ reference  local 9
+//                  ^^^^^^^^^ reference  local 5
     }
   
     return superNested(1) + overwriteName(1)
-//         ^^^^^^^^^^^ reference  local 4
-//                          ^^^^^^^^^^^^^ reference  local 5
+//         ^^^^^^^^^^^ reference  local 6
+//                          ^^^^^^^^^^^^^ reference  local 7
    }
   
    println(local, something)
-//         ^^^^^ reference  local 1
-//                ^^^^^^^^^ reference  local 2
+//         ^^^^^ reference  local 3
+//                ^^^^^^^^^ reference  local 4
   }
 

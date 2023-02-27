@@ -35,3 +35,5 @@ tree-sitter = "0.20.9"
 scip = { git = "https://github.com/sourcegraph/scip" }
 protobuf = "*"
 
+[profile.release]
+debug = 1

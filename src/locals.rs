@@ -52,6 +52,12 @@ impl<'a> Scope<'a> {
     }
 
     pub fn insert_definition(&mut self, definition: Definition<'a>) {
+        // TODO: Probably should assert that this the root node?
+        if definition.scope_modifier == ScopeModifier::Global {
+            self.definitions.push(definition);
+            return;
+        }
+
         if let Some(child) = self
             .children
             .iter_mut()
@@ -84,56 +90,6 @@ impl<'a> Scope<'a> {
     }
 
     fn stable_sort_definitions(&mut self) {
-        self.definitions.sort_by_key(|item| item.node.start_byte());
-        self.references.sort_by_key(|item| item.node.start_byte());
-
-        self.children.sort_by_key(|item| item.scope.start_byte());
-        self.children.iter_mut().for_each(|child| {
-            child.stable_sort_definitions();
-        });
-    }
-
-    pub fn into_occurrences(&mut self) -> Vec<Occurrence> {
-        self.stable_sort_definitions();
-        self.rec_into_occurrences(&mut 0)
-    }
-
-    fn occurrences_for_children(
-        self: &Scope<'a>,
-        def: &Definition<'a>,
-        symbol: &str,
-    ) -> Vec<Occurrence> {
-        if self
-            .definitions
-            .iter()
-            .any(|d| d.identifier == def.identifier)
-        {
-            // TODO: Should i return an option?
-            return vec![];
-        }
-
-        // child.references
-        let mut occurrences = vec![];
-        for reference in &self.references {
-            if reference.identifier == def.identifier {
-                occurrences.push(scip::types::Occurrence {
-                    range: reference.node.to_scip_range(),
-                    symbol: symbol.to_string(),
-                    ..Default::default()
-                });
-            }
-        }
-
-        occurrences.extend(
-            self.children
-                .iter()
-                .flat_map(|c| c.occurrences_for_children(def, symbol)),
-        );
-
-        occurrences
-    }
-
-    fn rec_into_occurrences(&self, id: &mut usize) -> Vec<Occurrence> {
         // TODO: Need to think about how to make sure that we have stable sorting
         //  It may not be worth it for performance generally speaking,
         //  but probably worth it for our snapshot files
@@ -181,11 +137,20 @@ impl<'a> Scope<'a> {
     }
 }
 
+#[derive(Debug, Default, PartialEq, Eq)]
+pub enum ScopeModifier {
+    #[default]
+    Local,
+    Parent,
+    Global,
+}
+
 #[derive(Debug)]
 pub struct Definition<'a> {
     pub group: &'a str,
     pub identifier: &'a str,
     pub node: Node<'a>,
+    pub scope_modifier: ScopeModifier,
 }
 
 #[derive(Debug)]
@@ -215,6 +180,7 @@ pub fn parse_tree<'a>(
         let mut scope = None;
         let mut definition = None;
         let mut reference = None;
+        let mut scope_modifier = None;
 
         for capture in m.captures {
             let capture_name = capture_names
@@ -226,6 +192,21 @@ pub fn parse_tree<'a>(
             if capture_name.starts_with("definition") {
                 assert!(definition.is_none(), "only one definition per match");
                 definition = Some(capture_name);
+
+                // Handle scope modifiers
+                let properties = config.query.property_settings(m.pattern_index);
+                for prop in properties {
+                    if &(*prop.key) == "scope" {
+                        match prop.value.as_deref() {
+                            Some("global") => scope_modifier = Some(ScopeModifier::Global),
+                            Some("parent") => scope_modifier = Some(ScopeModifier::Parent),
+                            Some("local") => scope_modifier = Some(ScopeModifier::Local),
+                            // TODO: Should probably error instead
+                            Some(other) => panic!("unknown scope-testing: {}", other),
+                            None => {}
+                        }
+                    }
+                }
             }
 
             if capture_name.starts_with("reference") {
@@ -243,10 +224,12 @@ pub fn parse_tree<'a>(
 
         if let Some(group) = definition {
             let identifier = node.utf8_text(source_bytes).expect("utf8_text");
+            let scope_modifier = scope_modifier.unwrap_or_default();
             definitions.push(Definition {
                 group,
                 identifier,
                 node,
+                scope_modifier,
             });
         } else if let Some(group) = reference {
             let identifier = node.utf8_text(source_bytes).expect("utf8_text");
@@ -283,6 +266,7 @@ pub fn parse_tree<'a>(
         root.insert_reference(m);
     }
 
+    // dbg!(&root);
     let occs = root.into_occurrences();
 
     Ok(occs)
@@ -332,6 +316,18 @@ mod test {
     fn test_can_do_nested_locals() -> Result<()> {
         let mut config = crate::languages::go_locals();
         let source_code = include_str!("../testdata/locals-nested.go");
+        let doc = parse_file_for_lang(&mut config, source_code)?;
+
+        let dumped = dump_document(&doc, source_code);
+        insta::assert_snapshot!(dumped);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_can_do_functions() -> Result<()> {
+        let mut config = crate::languages::go_locals();
+        let source_code = include_str!("../testdata/funcs.go");
         let doc = parse_file_for_lang(&mut config, source_code)?;
 
         let dumped = dump_document(&doc, source_code);
