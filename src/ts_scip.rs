@@ -1,5 +1,4 @@
-use scip::types::descriptor::Suffix;
-use scip::types::Descriptor;
+use scip::types::{descriptor::Suffix, Descriptor};
 
 pub fn capture_name_to_descriptor(capture: &str, name: String) -> Descriptor {
     Descriptor {

@@ -1,6 +1,7 @@
+use std::{collections::VecDeque, fmt::Write};
+
 use protobuf::Enum;
 use scip::types::{Document, SymbolRole};
-use std::{collections::VecDeque, fmt::Write};
 
 pub struct FileRange {
     pub start: usize,

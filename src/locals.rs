@@ -1,11 +1,10 @@
+use anyhow::Result;
 use protobuf::Enum;
 use scip::{
     symbol::format_symbol,
     types::{Occurrence, Symbol},
 };
 use scip_treesitter::prelude::*;
-
-use anyhow::Result;
 use tree_sitter::Node;
 
 use crate::languages::LocalConfiguration;
@@ -99,6 +98,41 @@ impl<'a> Scope<'a> {
         self.rec_into_occurrences(&mut 0)
     }
 
+    fn occurrences_for_children(
+        self: &Scope<'a>,
+        def: &Definition<'a>,
+        symbol: &str,
+    ) -> Vec<Occurrence> {
+        if self
+            .definitions
+            .iter()
+            .any(|d| d.identifier == def.identifier)
+        {
+            // TODO: Should i return an option?
+            return vec![];
+        }
+
+        // child.references
+        let mut occurrences = vec![];
+        for reference in &self.references {
+            if reference.identifier == def.identifier {
+                occurrences.push(scip::types::Occurrence {
+                    range: reference.node.to_scip_range(),
+                    symbol: symbol.to_string(),
+                    ..Default::default()
+                });
+            }
+        }
+
+        occurrences.extend(
+            self.children
+                .iter()
+                .flat_map(|c| c.occurrences_for_children(def, symbol)),
+        );
+
+        occurrences
+    }
+
     fn rec_into_occurrences(&self, id: &mut usize) -> Vec<Occurrence> {
         // TODO: Need to think about how to make sure that we have stable sorting
         //  It may not be worth it for performance generally speaking,
@@ -129,6 +163,12 @@ impl<'a> Scope<'a> {
                     });
                 }
             }
+
+            occurrences.extend(
+                self.children
+                    .iter()
+                    .flat_map(|c| c.occurrences_for_children(definition, symbol.as_str())),
+            )
         }
 
         occurrences.extend(
@@ -243,23 +283,18 @@ pub fn parse_tree<'a>(
         root.insert_reference(m);
     }
 
-    dbg!(&root);
     let occs = root.into_occurrences();
-    dbg!(&occs);
 
     Ok(occs)
-
-    // let tags = root.into_occurrences();
-    // Ok(dbg!(tags))
 }
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::languages::LocalConfiguration;
-    use crate::snapshot::dump_document;
     use anyhow::Result;
     use scip::types::Document;
+
+    use super::*;
+    use crate::{languages::LocalConfiguration, snapshot::dump_document};
 
     #[allow(dead_code)]
     fn parse_file_for_lang(config: &mut LocalConfiguration, source_code: &str) -> Result<Document> {
@@ -285,6 +320,18 @@ mod test {
     fn test_can_do_go() -> Result<()> {
         let mut config = crate::languages::go_locals();
         let source_code = include_str!("../testdata/locals.go");
+        let doc = parse_file_for_lang(&mut config, source_code)?;
+
+        let dumped = dump_document(&doc, source_code);
+        insta::assert_snapshot!(dumped);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_can_do_nested_locals() -> Result<()> {
+        let mut config = crate::languages::go_locals();
+        let source_code = include_str!("../testdata/locals-nested.go");
         let doc = parse_file_for_lang(&mut config, source_code)?;
 
         let dumped = dump_document(&doc, source_code);

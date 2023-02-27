@@ -1,8 +1,7 @@
-use scip_treesitter::prelude::*;
-
 use anyhow::Result;
 use protobuf::Enum;
 use scip::types::Descriptor;
+use scip_treesitter::prelude::*;
 use tree_sitter::Node;
 
 use crate::languages::TagConfiguration;
@@ -296,10 +295,10 @@ fn dbg_format_descriptors(descriptors: &[Descriptor]) -> Vec<String> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
-    use crate::snapshot::dump_document;
     use scip::types::Document;
+
+    use super::*;
+    use crate::snapshot::dump_document;
 
     fn parse_file_for_lang(config: &mut TagConfiguration, source_code: &str) -> Result<Document> {
         let source_bytes = source_code.as_bytes();

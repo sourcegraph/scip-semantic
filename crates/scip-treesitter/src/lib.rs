@@ -1,8 +1,7 @@
 use tree_sitter::Node;
 
 pub mod prelude {
-    pub use super::ContainsNode;
-    pub use super::NodeToScipRange;
+    pub use super::{ContainsNode, NodeToScipRange};
 }
 
 pub trait ContainsNode {
