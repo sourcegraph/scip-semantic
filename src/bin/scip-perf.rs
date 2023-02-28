@@ -47,8 +47,10 @@ fn measure_parsing() {
 
     let root = Path::new(
         // "/home/tjdevries/sourcegraph/sourcegraph.git/main/",
-        // "/home/tjdevries/sourcegraph/sourcegraph.git/main/internal/database/mocks_temp.go",
-        "/home/tjdevries/sourcegraph/scip-semantic/testdata/locals-nested.go",
+        "/home/tjdevries/sourcegraph/sourcegraph.git/main/internal/database/mocks_temp.go",
+        // "/home/tjdevries/sourcegraph/scip-semantic/testdata/locals-nested.go",
+        // "/home/tjdevries/sourcegraph/scip-semantic/testdata/funcs.go",
+        // "/home/tjdevries/sourcegraph/scip-semantic/testdata/multi-scopes.go",
     );
     let mut timings = parse_files(root);
     timings.sort_by(|a, b| a.duration.cmp(&b.duration));

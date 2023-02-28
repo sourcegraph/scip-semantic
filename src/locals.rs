@@ -110,17 +110,31 @@ impl<'a> Scope<'a> {
             }
         }
 
-        if let Some(child) = self
+        match self
             .children
-            .iter_mut()
-            .find(|child| child.range.contains(&reference.range))
+            .binary_search_by_key(&reference.range.start, |r| r.range.start)
         {
-            child.insert_reference(reference)
-        } else {
-            self.references
-                .entry(reference.identifier)
-                .or_default()
-                .push(reference);
+            Ok(_) => {
+                // self.children[idx].insert_reference(reference);
+                todo!("I'm not sure what to do yet, think more now");
+            }
+            Err(idx) => match idx {
+                0 => self
+                    .references
+                    .entry(reference.identifier)
+                    .or_default()
+                    .push(reference),
+                idx => {
+                    if self.children[idx - 1].range.contains(&reference.range) {
+                        self.children[idx - 1].insert_reference(reference)
+                    } else {
+                        self.references
+                            .entry(reference.identifier)
+                            .or_default()
+                            .push(reference)
+                    }
+                }
+            },
         }
     }
 
@@ -148,28 +162,22 @@ impl<'a> Scope<'a> {
         for child in to_clean {
             self.children.extend(child.children);
         }
-    }
 
-    fn stable_sort_definitions(&mut self) {
-        // self.definitions.sort_by_key(|item| item.start_byte);
-        // self.references.sort_by_key(|item| item.range.start);
-
-        self.children.sort_by_key(|item| item.range.start);
-        self.children.iter_mut().for_each(|child| {
-            child.stable_sort_definitions();
-        });
+        self.children.sort_by_key(|s| s.range.start);
     }
 
     pub fn into_occurrences(&mut self, hint: usize) -> Vec<Occurrence> {
-        self.stable_sort_definitions();
-
         let mut occs = Vec::with_capacity(hint);
         self.rec_into_occurrences(&mut 0, &mut occs);
         occs
     }
 
     fn rec_into_occurrences(&self, id: &mut usize, occurrences: &mut Vec<Occurrence>) {
-        for definition in self.definitions.values() {
+        // TODO: I'm a little sad about this
+        let mut values = self.definitions.values().collect::<Vec<_>>();
+        values.sort_by_key(|d| d.range.start);
+
+        for definition in values {
             *id += 1;
 
             let symbol = format_symbol(Symbol::new_local(*id));
@@ -248,8 +256,6 @@ impl<'a> Scope<'a> {
     }
 
     fn rec_display_scopes(&self, depth: usize) {
-        println!("{}{:?}", " ".repeat(depth * 2), self.scope);
-
         let depth = depth + 1;
         for child in self.children.iter() {
             child.rec_display_scopes(depth);
@@ -385,9 +391,7 @@ pub fn parse_tree<'a>(
         )
     });
 
-    // dbg!(scopes.len());
-    // dbg!(definitions.len());
-    // dbg!(references.len());
+    let orig = scopes.len();
 
     let capacity = definitions.len() + references.len();
 
@@ -396,9 +400,10 @@ pub fn parse_tree<'a>(
         root.insert_scope(m);
     }
 
-    // dbg!(&root);
-    println!("Before cleaning");
-    root.display_scopes();
+    if orig < 500 {
+        println!("Before cleaning");
+        root.display_scopes();
+    }
 
     while let Some(m) = definitions.pop() {
         root.insert_definition(m);
@@ -406,8 +411,10 @@ pub fn parse_tree<'a>(
 
     root.clean_empty_scopes();
 
-    println!("After cleaning");
-    root.display_scopes();
+    if orig < 500 {
+        println!("After cleaning");
+        root.display_scopes();
+    }
 
     while let Some(m) = references.pop() {
         root.insert_reference(m);

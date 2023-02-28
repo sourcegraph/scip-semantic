@@ -1,6 +1,6 @@
 ---
 source: src/locals.rs
-assertion_line: 448
+assertion_line: 502
 expression: dumped
 ---
   package main
@@ -14,7 +14,7 @@ expression: dumped
 // ^^^^^^^^^ definition  local 3
 //                   ^^^^^^^^^ definition  local 4
     superNested := func(deeplyNested int) int {
-//  ^^^^^^^^^^^ definition  local 6
+//  ^^^^^^^^^^^ definition  local 5
 //                      ^^^^^^^^^^^^ definition  local 7
      return local + unrelated + deeplyNested
 //          ^^^^^ reference  local 2
@@ -23,7 +23,7 @@ expression: dumped
     }
   
     overwriteName := func(local int) int {
-//  ^^^^^^^^^^^^^ definition  local 5
+//  ^^^^^^^^^^^^^ definition  local 6
 //                        ^^^^^ definition  local 8
      return local + unrelated
 //          ^^^^^ reference  local 8
@@ -31,8 +31,8 @@ expression: dumped
     }
   
     return superNested(1) + overwriteName(1)
-//         ^^^^^^^^^^^ reference  local 6
-//                          ^^^^^^^^^^^^^ reference  local 5
+//         ^^^^^^^^^^^ reference  local 5
+//                          ^^^^^^^^^^^^^ reference  local 6
    }
   
    println(local, something)
