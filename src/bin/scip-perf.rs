@@ -46,8 +46,8 @@ fn measure_parsing() {
     let start = Instant::now();
 
     let root = Path::new(
-        "/home/tjdevries/sourcegraph/sourcegraph.git/main/",
-        // "/home/tjdevries/sourcegraph/sourcegraph.git/main/internal/database/mocks_temp.go",
+        // "/home/tjdevries/sourcegraph/sourcegraph.git/main/",
+        "/home/tjdevries/sourcegraph/sourcegraph.git/main/internal/database/mocks_temp.go",
         // "/home/tjdevries/sourcegraph/scip-semantic/testdata/locals-nested.go",
         // "/home/tjdevries/sourcegraph/scip-semantic/testdata/funcs.go",
         // "/home/tjdevries/sourcegraph/scip-semantic/testdata/multi-scopes.go",

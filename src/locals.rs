@@ -18,7 +18,6 @@ pub struct ByteRange {
 }
 
 impl ByteRange {
-    #[inline]
     pub fn contains(&self, other: &Self) -> bool {
         self.start <= other.start && self.end >= other.end
     }
@@ -68,12 +67,6 @@ impl<'a> Scope<'a> {
     }
 
     pub fn insert_scope(&mut self, scope: Scope<'a>) {
-        // match self.children.last_mut() {
-        //     Some(child) if child.range.contains(&scope.range) => {
-        //         child.insert_scope(scope);
-        //     }
-        //     _ => self.children.push(scope),
-        // }
         if let Some(child) = self
             .children
             .iter_mut()
