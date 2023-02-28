@@ -204,14 +204,14 @@ impl<'a> Scope<'a> {
             return;
         }
 
-        for reference in &self.references {
-            // if reference.identifier == def.identifier {
-            //     occurrences.push(scip::types::Occurrence {
-            //         range: reference.node.to_scip_range(),
-            //         symbol: symbol.to_string(),
-            //         ..Default::default()
-            //     });
-            // }
+        if let Some(references) = self.references.get(def.identifier) {
+            for reference in references {
+                occurrences.push(scip::types::Occurrence {
+                    range: reference.node.to_scip_range(),
+                    symbol: symbol.to_string(),
+                    ..Default::default()
+                });
+            }
         }
 
         self.children
@@ -348,9 +348,9 @@ pub fn parse_tree<'a>(
         )
     });
 
-    dbg!(scopes.len());
-    dbg!(definitions.len());
-    dbg!(references.len());
+    // dbg!(scopes.len());
+    // dbg!(definitions.len());
+    // dbg!(references.len());
 
     let capacity = definitions.len() + references.len();
 
@@ -364,20 +364,14 @@ pub fn parse_tree<'a>(
     }
 
     // TODO: Collapse these scopes, to reduce nesting.
-    let mut matched_scopes = vec![];
-    root.find_scopes_with(&mut matched_scopes);
-    dbg!(matched_scopes.len());
+    // let mut matched_scopes = vec![];
+    // root.find_scopes_with(&mut matched_scopes);
 
     while let Some(m) = references.pop() {
         root.insert_reference(m);
     }
 
-    // dbg!(&root);
     let occs = root.into_occurrences(capacity);
-
-    // if true {
-    //     return Ok(vec![]);
-    // }
 
     Ok(occs)
 }

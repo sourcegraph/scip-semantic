@@ -1,29 +1,31 @@
 ---
 source: src/locals.rs
-assertion_line: 420
+assertion_line: 414
 expression: dumped
 ---
   package main
-//        ^^^^ definition  local 3
+//        ^^^^ definition  local 2
   
   func main() {
+//     ^^^^ reference  local 2
    local := true
-// ^^^^^ definition  local 4
+// ^^^^^ definition  local 5
    something := func(local int) int {
-// ^^^^^^^^^ definition  local 5
+// ^^^^^^^^^ definition  local 4
 //                   ^^^^^ definition  local 6
     return local
+//         ^^^^^ reference  local 6
    }
   
    println(local, something)
-//         ^^^^^ reference  local 4
-//                ^^^^^^^^^ reference  local 5
+//         ^^^^^ reference  local 5
+//                ^^^^^^^^^ reference  local 4
   }
   
   func Another(local int) int {
-//     ^^^^^^^ definition  local 1
-//             ^^^^^ definition  local 2
+//     ^^^^^^^ definition  local 3
+//             ^^^^^ definition  local 1
    return local
-//        ^^^^^ reference  local 2
+//        ^^^^^ reference  local 1
   }
 

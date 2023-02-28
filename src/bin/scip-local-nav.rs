@@ -2,60 +2,56 @@ use std::{fs, path::Path};
 
 use scip::{types::Document, write_message_to_file};
 use scip_semantic::{languages::LocalConfiguration, locals::parse_tree};
+use walkdir::WalkDir;
 
-fn recurse_dirs(config: &mut LocalConfiguration, root: &Path, dir: &Path) -> Vec<Document> {
+fn parse_files(config: &mut LocalConfiguration, root: &Path, dir: &Path) -> Vec<Document> {
     // TODO: Filtr
 
     let extension = "go";
 
     let mut documents = vec![];
-    for entry in dir.read_dir().expect("is a valid directory") {
-        let entry = entry.expect("is a valid entry");
+    for entry in WalkDir::new(dir) {
+        let entry = entry.unwrap();
+        let entry = entry.path();
 
-        let path = entry.path();
-
-        if path.is_dir() {
-            documents.extend(recurse_dirs(config, root, &path));
-        } else {
-            match path.extension() {
-                Some(ext) => {
-                    if ext != extension {
-                        continue;
-                    }
+        match entry.extension() {
+            Some(ext) => {
+                if ext != extension {
+                    continue;
                 }
-                None => continue,
             }
-
-            let contents = fs::read_to_string(&path).expect("is a valid file");
-            let tree = config
-                .parser
-                .parse(contents.as_bytes(), None)
-                .expect("to parse the tree");
-
-            let occs = parse_tree(config, &tree, contents.as_bytes()).expect("to get occurrences");
-
-            let mut doc = Document::new();
-            doc.language = "go".to_string();
-            doc.relative_path = path
-                .strip_prefix(root)
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
-            doc.occurrences = occs;
-            doc.symbols = vec![];
-
-            // All the symbols are local, so we don't want to do this.
-            // doc.symbols = doc
-            //     .occurrences
-            //     .iter()
-            //     .map(|o| scip::types::SymbolInformation {
-            //         symbol: o.symbol.clone(),
-            //         ..Default::default()
-            //     })
-            //     .collect();
-
-            documents.push(doc);
+            None => continue,
         }
+
+        let contents = fs::read_to_string(entry).expect("is a valid file");
+        let tree = config
+            .parser
+            .parse(contents.as_bytes(), None)
+            .expect("to parse the tree");
+
+        let occs = parse_tree(config, &tree, contents.as_bytes()).expect("to get occurrences");
+
+        let mut doc = Document::new();
+        doc.language = "go".to_string();
+        doc.relative_path = entry
+            .strip_prefix(root)
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        doc.occurrences = occs;
+        doc.symbols = vec![];
+
+        // All the symbols are local, so we don't want to do this.
+        // doc.symbols = doc
+        //     .occurrences
+        //     .iter()
+        //     .map(|o| scip::types::SymbolInformation {
+        //         symbol: o.symbol.clone(),
+        //         ..Default::default()
+        //     })
+        //     .collect();
+
+        documents.push(doc);
     }
 
     documents
@@ -86,7 +82,7 @@ fn main() {
     let mut config = scip_semantic::languages::go_locals();
     index
         .documents
-        .extend(recurse_dirs(&mut config, directory, directory));
+        .extend(parse_files(&mut config, directory, directory));
 
     println!("{:?}", index.documents.len());
     write_message_to_file(directory.join("index.scip"), index).expect("to write the file");
