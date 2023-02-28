@@ -1,9 +1,9 @@
 use std::{fs, path::Path};
 
 use scip::{types::Document, write_message_to_file};
-use scip_semantic::locals::parse_tree;
+use scip_semantic::{languages::LocalConfiguration, locals::parse_tree};
 
-fn recurse_dirs(root: &Path, dir: &Path) -> Vec<Document> {
+fn recurse_dirs(config: &mut LocalConfiguration, root: &Path, dir: &Path) -> Vec<Document> {
     // TODO: Filtr
 
     let extension = "go";
@@ -15,7 +15,7 @@ fn recurse_dirs(root: &Path, dir: &Path) -> Vec<Document> {
         let path = entry.path();
 
         if path.is_dir() {
-            documents.extend(recurse_dirs(root, &path));
+            documents.extend(recurse_dirs(config, root, &path));
         } else {
             match path.extension() {
                 Some(ext) => {
@@ -27,14 +27,12 @@ fn recurse_dirs(root: &Path, dir: &Path) -> Vec<Document> {
             }
 
             let contents = fs::read_to_string(&path).expect("is a valid file");
-            let mut config = scip_semantic::languages::go_locals();
             let tree = config
                 .parser
                 .parse(contents.as_bytes(), None)
                 .expect("to parse the tree");
 
-            let occs =
-                parse_tree(&mut config, &tree, contents.as_bytes()).expect("to get occurrences");
+            let occs = parse_tree(config, &tree, contents.as_bytes()).expect("to get occurrences");
 
             let mut doc = Document::new();
             doc.language = "go".to_string();
@@ -85,7 +83,10 @@ fn main() {
         ..Default::default()
     };
 
-    index.documents.extend(recurse_dirs(directory, directory));
+    let mut config = scip_semantic::languages::go_locals();
+    index
+        .documents
+        .extend(recurse_dirs(&mut config, directory, directory));
 
     println!("{:?}", index.documents.len());
     write_message_to_file(directory.join("index.scip"), index).expect("to write the file");

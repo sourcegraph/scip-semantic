@@ -1,19 +1,15 @@
-; ;; Scopes
-(source_file) @scope
-
 ;; (source
   ;; (scope: Something)
   ;; (scope: Another
     ;; call Something))
 
-(function_declaration) @scope
-(if_statement) @scope
-(block) @scope
-(expression_switch_statement) @scope
-(for_statement) @scope
-(method_declaration) @scope
-(function_declaration) @scope
 (func_literal) @scope
+(function_declaration) @scope
+(method_declaration) @scope
+(expression_switch_statement) @scope
+(if_statement) @scope
+(for_statement) @scope
+(block) @scope
 
 (short_var_declaration
   left: (expression_list (identifier) @definition.term))

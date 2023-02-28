@@ -1,20 +1,19 @@
 ---
 source: src/locals.rs
-assertion_line: 384
+assertion_line: 444
 expression: dumped
 ---
   package example
-//        ^^^^^^^ definition  local 3
+//        ^^^^^^^ definition  local 4
   
   import (
    f "fmt"
-// ^ definition  local 4
+// ^ definition  local 3
   )
   
   func Something() {
 //     ^^^^^^^^^ definition  local 1
    f.Println("hello")
-// ^ reference  local 4
   }
   
   func Another() {
