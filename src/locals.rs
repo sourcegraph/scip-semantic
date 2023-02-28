@@ -29,7 +29,6 @@ pub struct Scope<'a> {
     pub scope: Node<'a>,
     pub range: ByteRange,
     pub definitions: HashMap<&'a str, Definition<'a>>,
-    // pub references: Vec<Reference<'a>>,
     pub references: HashMap<&'a str, Vec<Reference<'a>>>,
     pub children: Vec<Scope<'a>>,
 }
@@ -68,34 +67,21 @@ impl<'a> Scope<'a> {
         }
     }
 
-    fn find_scopes_with(
-        &'a self,
-        scopes: &mut Vec<&Scope<'a>>,
-        // predicate: impl Fn(&Scope<'a>) -> bool,
-    ) {
-        if self.definitions.is_empty() {
-            scopes.push(self);
-        }
-
-        for child in &self.children {
-            child.find_scopes_with(scopes);
-        }
-    }
-
     pub fn insert_scope(&mut self, scope: Scope<'a>) {
+        // match self.children.last_mut() {
+        //     Some(child) if child.range.contains(&scope.range) => {
+        //         child.insert_scope(scope);
+        //     }
+        //     _ => self.children.push(scope),
+        // }
         if let Some(child) = self
             .children
             .iter_mut()
-            .find(|child| self.range.contains(&child.range))
+            .find(|child| child.range.contains(&scope.range))
         {
             child.insert_scope(scope);
         } else {
-            // TODO: We can insert this in a sorted fashion, then use binary search for the rest of
-            // these from now on.
-            //
-            // Could consider not using a vec directly as well I suppose
             self.children.push(scope);
-            // self.children.into_raw_parts
         }
     }
 
@@ -138,22 +124,46 @@ impl<'a> Scope<'a> {
         }
     }
 
+    // This flattens our scope tree so that we don't have any scopes
+    // remaining for when we do reference lookups that don't actually
+    // contain any definitions. Those are pretty useless.
+    pub fn clean_empty_scopes(&mut self) {
+        self.children.iter_mut().for_each(|child| {
+            child.clean_empty_scopes();
+        });
+
+        let mut empty_children = vec![];
+        for (idx, child) in self.children.iter().enumerate() {
+            if child.definitions.is_empty() {
+                empty_children.push(idx);
+            }
+        }
+
+        let mut to_clean = vec![];
+        for idx in empty_children.into_iter().rev() {
+            to_clean.push(self.children.remove(idx));
+        }
+
+        // Add the children to the parent scope
+        for child in to_clean {
+            self.children.extend(child.children);
+        }
+    }
+
     fn stable_sort_definitions(&mut self) {
         // self.definitions.sort_by_key(|item| item.start_byte);
         // self.references.sort_by_key(|item| item.range.start);
-        //
-        // self.children.sort_by_key(|item| item.range.start);
-        // self.children.iter_mut().for_each(|child| {
-        //     child.stable_sort_definitions();
-        // });
+
+        self.children.sort_by_key(|item| item.range.start);
+        self.children.iter_mut().for_each(|child| {
+            child.stable_sort_definitions();
+        });
     }
 
     pub fn into_occurrences(&mut self, hint: usize) -> Vec<Occurrence> {
         self.stable_sort_definitions();
 
         let mut occs = Vec::with_capacity(hint);
-        // TODO: This may be something useful to get more correct.
-        occs.reserve(self.definitions.len() + self.references.len());
         self.rec_into_occurrences(&mut 0, &mut occs);
         occs
     }
@@ -169,7 +179,6 @@ impl<'a> Scope<'a> {
                 range: definition.node.to_scip_range(),
                 symbol: symbol.clone(),
                 symbol_roles,
-                // TODO:
                 // syntax_kind: todo!(),
                 ..Default::default()
             });
@@ -217,6 +226,34 @@ impl<'a> Scope<'a> {
         self.children
             .iter()
             .for_each(|c| c.occurrences_for_children(def, symbol, occurrences));
+    }
+
+    #[allow(dead_code)]
+    fn find_scopes_with(
+        &'a self,
+        scopes: &mut Vec<&Scope<'a>>,
+        // predicate: impl Fn(&Scope<'a>) -> bool,
+    ) {
+        if self.definitions.is_empty() {
+            scopes.push(self);
+        }
+
+        for child in &self.children {
+            child.find_scopes_with(scopes);
+        }
+    }
+
+    pub fn display_scopes(&self) {
+        self.rec_display_scopes(0);
+    }
+
+    fn rec_display_scopes(&self, depth: usize) {
+        println!("{}{:?}", " ".repeat(depth * 2), self.scope);
+
+        let depth = depth + 1;
+        for child in self.children.iter() {
+            child.rec_display_scopes(depth);
+        }
     }
 }
 
@@ -359,13 +396,18 @@ pub fn parse_tree<'a>(
         root.insert_scope(m);
     }
 
+    // dbg!(&root);
+    println!("Before cleaning");
+    root.display_scopes();
+
     while let Some(m) = definitions.pop() {
         root.insert_definition(m);
     }
 
-    // TODO: Collapse these scopes, to reduce nesting.
-    // let mut matched_scopes = vec![];
-    // root.find_scopes_with(&mut matched_scopes);
+    root.clean_empty_scopes();
+
+    println!("After cleaning");
+    root.display_scopes();
 
     while let Some(m) = references.pop() {
         root.insert_reference(m);
