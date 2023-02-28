@@ -22,6 +22,7 @@ scip-macros = { path = "crates/scip-macros" }
 
 # TODO: I forget how to move this to only test haha
 insta = "1.28.0"
+rustc-hash = "1.1.0"
 
 [workspace]
 members = [

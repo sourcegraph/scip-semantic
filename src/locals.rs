@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use anyhow::Result;
 use protobuf::Enum;
+use rustc_hash::FxHashMap as HashMap;
 use scip::{
     symbol::format_symbol,
     types::{Occurrence, Symbol},
@@ -60,8 +59,8 @@ impl<'a> Scope<'a> {
                 start: scope.start_byte(),
                 end: scope.end_byte(),
             },
-            definitions: HashMap::new(),
-            references: HashMap::new(),
+            definitions: HashMap::default(),
+            references: HashMap::default(),
             children: vec![],
         }
     }

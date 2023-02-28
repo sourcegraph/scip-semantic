@@ -2,5 +2,6 @@
 /Cargo.lock
 
 flamegraph.svg
+flamegraph-*
 perf.data
 perf.data.*
