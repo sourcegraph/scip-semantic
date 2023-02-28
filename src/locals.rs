@@ -173,7 +173,9 @@ impl<'a> Scope<'a> {
     }
 
     fn rec_into_occurrences(&self, id: &mut usize, occurrences: &mut Vec<Occurrence>) {
-        // TODO: I'm a little sad about this
+        // TODO: I'm a little sad about this.
+        //  We could probably make this a runtime option, where `self` has a `sorted` value
+        //  that decides whether we need to or not. But on a huge file, this made no difference.
         let mut values = self.definitions.values().collect::<Vec<_>>();
         values.sort_by_key(|d| d.range.start);
 
@@ -391,8 +393,6 @@ pub fn parse_tree<'a>(
         )
     });
 
-    let orig = scopes.len();
-
     let capacity = definitions.len() + references.len();
 
     // Add all the scopes to our tree
@@ -400,21 +400,11 @@ pub fn parse_tree<'a>(
         root.insert_scope(m);
     }
 
-    if orig < 500 {
-        println!("Before cleaning");
-        root.display_scopes();
-    }
-
     while let Some(m) = definitions.pop() {
         root.insert_definition(m);
     }
 
     root.clean_empty_scopes();
-
-    if orig < 500 {
-        println!("After cleaning");
-        root.display_scopes();
-    }
 
     while let Some(m) = references.pop() {
         root.insert_reference(m);
