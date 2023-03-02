@@ -1,9 +1,10 @@
 use anyhow::Result;
 use protobuf::Enum;
 use scip::types::Descriptor;
+use scip_treesitter::prelude::*;
 use tree_sitter::Node;
 
-use crate::{languages::TagConfiguration, ts_node};
+use crate::languages::TagConfiguration;
 
 #[derive(Debug)]
 pub struct Root<'a> {
@@ -72,6 +73,12 @@ pub enum Matched<'a> {
     Global(Global<'a>),
 }
 
+impl<'a> ContainsNode for Matched<'a> {
+    fn contains_node(&self, node: &Node) -> bool {
+        self.node().contains_node(node)
+    }
+}
+
 impl<'a> Matched<'a> {
     pub fn node(&self) -> &Node<'a> {
         match self {
@@ -89,17 +96,13 @@ impl<'a> Matched<'a> {
     //     }
     // }
 
-    pub fn contains(&self, node: &Node<'a>) -> bool {
-        ts_node::contains(self.node(), node)
-    }
-
     pub fn insert(&mut self, m: Matched<'a>) {
         match self {
             Matched::Root(root) => {
                 if let Some(child) = root
                     .children
                     .iter_mut()
-                    .find(|child| child.contains(m.node()))
+                    .find(|child| child.contains_node(m.node()))
                 {
                     child.insert(m);
                 } else {
@@ -110,7 +113,7 @@ impl<'a> Matched<'a> {
                 if let Some(child) = scope
                     .children
                     .iter_mut()
-                    .find(|child| child.contains(m.node()))
+                    .find(|child| child.contains_node(m.node()))
                 {
                     child.insert(m);
                 } else {
@@ -292,10 +295,10 @@ fn dbg_format_descriptors(descriptors: &[Descriptor]) -> Vec<String> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
-    use crate::snapshot::dump_document;
     use scip::types::Document;
+
+    use super::*;
+    use crate::snapshot::dump_document;
 
     fn parse_file_for_lang(config: &mut TagConfiguration, source_code: &str) -> Result<Document> {
         let source_bytes = source_code.as_bytes();

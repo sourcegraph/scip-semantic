@@ -1,10 +1,12 @@
 package example
 
-import "fmt"
+import (
+	f "fmt"
+)
 
 func Something() {
 	x := true
-	fmt.Println(x)
+	f.Println(x)
 }
 
 func Another() float64 { return 5 / 3 }

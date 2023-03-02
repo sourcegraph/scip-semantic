@@ -1,5 +1,7 @@
-use scip::types::Document;
 use std::{collections::VecDeque, fmt::Write};
+
+use protobuf::Enum;
+use scip::types::{Document, SymbolRole};
 
 pub struct FileRange {
     pub start: usize,
@@ -64,12 +66,19 @@ pub fn dump_document_range(doc: &Document, source: &str, file_range: &Option<Fil
                         format!(" {}", occ.symbol)
                     };
 
+                    let kind = if occ.symbol_roles == SymbolRole::Definition.value() {
+                        "definition"
+                    } else {
+                        "reference"
+                    };
+
                     // TODO: This will only work for definitions right now
                     let _ = writeln!(
                         result,
-                        "//{}{} definition{multiline_suffix} {}",
+                        "//{}{} {}{multiline_suffix} {}",
                         " ".repeat(range.start_col as usize),
                         "^".repeat(length),
+                        kind,
                         symbol_suffix,
                     );
                 }
@@ -89,6 +98,7 @@ pub struct PackedRange {
 }
 
 impl PackedRange {
+    #[inline(always)]
     pub fn from_vec(v: &[i32]) -> Self {
         match v.len() {
             3 => Self {
