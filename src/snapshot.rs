@@ -98,6 +98,7 @@ pub struct PackedRange {
 }
 
 impl PackedRange {
+    #[inline(always)]
     pub fn from_vec(v: &[i32]) -> Self {
         match v.len() {
             3 => Self {

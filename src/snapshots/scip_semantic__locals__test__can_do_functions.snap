@@ -1,6 +1,6 @@
 ---
 source: src/locals.rs
-assertion_line: 487
+assertion_line: 469
 expression: dumped
 ---
   package example
@@ -9,6 +9,7 @@ expression: dumped
   import (
    f "fmt"
 // ^ definition  local 2
+   "github.com/sourcegraph/"
   )
   
   func Something() {
